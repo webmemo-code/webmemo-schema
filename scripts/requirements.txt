@@ -1,0 +1,6 @@
+requests>=2.25.0
+pandas>=1.2.0
+beautifulsoup4>=4.9.3
+google-auth>=2.0.0
+gspread>=4.0.0
+oauth2client>=4.1.3
