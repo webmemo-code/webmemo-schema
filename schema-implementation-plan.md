@@ -1,4 +1,5 @@
 # Webmemo Schema.org Implementation Plan
+# For api.webmemo.ch test server
 
 ## 1. Plugin Structure
 
@@ -55,7 +56,7 @@ auth.authenticate_user()
 gc = gspread.authorize(GoogleCredentials.get_application_default())
 
 # WordPress REST API endpoints
-WP_API_BASE = 'https://webmemo.ch/wp-json/wp/v2'
+WP_API_BASE = 'https://api.webmemo.ch/wp-json/wp/v2'
 ENDPOINTS = {
     'posts': f'{WP_API_BASE}/posts',
     'pages': f'{WP_API_BASE}/pages',
