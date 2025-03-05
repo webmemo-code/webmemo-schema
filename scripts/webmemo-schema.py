@@ -10,10 +10,27 @@ from datetime import datetime
 from google.colab import auth, drive
 import gspread
 from oauth2client.client import GoogleCredentials
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get credentials from environment variables
+WP_API_USER = os.getenv('WP_API_TESTER')
+WP_API_PASSWORD = os.getenv('WP_API_PW')
+# Google credentials are loaded automatically from GOOGLE_APPLICATION_CREDENTIALS env var, but, see below
+
+# Set credentials (in Colab, credentials are stored in dedicated environment variables)
+os.environ['WP_API_USER'] = os.getenv('WP_API_TESTER')
+os.environ['WP_API_PASSWORD'] = os.getenv('WP_API_PW')
+
+# For Google credentials, you would typically upload the JSON file to Colab
+# and then set the path
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.getenv('GOOGLE_APP_CREDS')
 
 # Configuration
-WP_API_BASE = 'https://webmemo.ch/wp-json/wp/v2'
-SCHEMA_API_BASE = 'https://webmemo.ch/wp-json/webmemo-schema/v1'
+WP_API_BASE = 'https://api.webmemo.ch/wp-json/wp/v2'
+SCHEMA_API_BASE = 'https://api.webmemo.ch/wp-json/webmemo-schema/v1'
 ENDPOINTS = {
     'posts': f'{WP_API_BASE}/posts',
     'pages': f'{WP_API_BASE}/pages',
@@ -28,7 +45,7 @@ def authenticate():
     """Authenticate with Google services"""
     print("Authenticating with Google...")
     auth.authenticate_user()
-    drive.mount('/content/drive')
+    drive.mount('/content/drive/MyDrive/Tools AI/Schema to WP')
     return gspread.authorize(GoogleCredentials.get_application_default())
 
 def fetch_all_pages(endpoint, params=None):
@@ -98,7 +115,7 @@ def fetch_data():
 def generate_person_schema(user_data):
     """Generate Schema.org Person markup for a WordPress user"""
     user_slug = user_data['slug']
-    user_url = f"https://webmemo.ch/author/{user_slug}"
+    user_url = f"https://api.webmemo.ch/author/{user_slug}"
     
     schema = {
         "@context": "https://schema.org",
