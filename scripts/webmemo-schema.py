@@ -8,27 +8,25 @@ import argparse
 import os
 import time
 from datetime import datetime
-from google.colab import auth, drive
-import gspread
-from oauth2client.client import GoogleCredentials
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Check if running in Google Colab
-IN_COLAB = 'google.colab' in str(get_ipython())
-
-# Conditional imports based on environment
-if IN_COLAB:
+# Determine if we're running in Colab or not
+try:
+    # This will only work in Google Colab
     from google.colab import auth as colab_auth, drive
     import gspread
     from oauth2client.client import GoogleCredentials
-else:
-    # For non-Colab environments like GitHub Actions
+    IN_COLAB = True
+    print("Running in Google Colab environment")
+except ImportError:
+    # For non-Colab environments (GitHub Actions, local machine)
     import gspread
     from google.oauth2.service_account import Credentials
-    from googleapiclient.discovery import build
+    IN_COLAB = False
+    print("Running in standard Python environment")
 
 # Get credentials from environment variables
 WP_API_USER = os.getenv('WP_API_TESTER')
@@ -61,6 +59,8 @@ def authenticate():
         credentials_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
         if not credentials_path:
             raise ValueError("GOOGLE_APPLICATION_CREDENTIALS environment variable not set")
+        
+        print(f"Using credentials file: {credentials_path}")
         
         scopes = [
             'https://www.googleapis.com/auth/spreadsheets',
