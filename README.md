@@ -1,6 +1,8 @@
 # webmemo-schema
 Code to programmatically generate Schema.org data for https://webmemo.ch
 
+I discourage forking this repository: I have no formal training in computer science. I compiled this repository with Claude AI's help.
+
 # Implementation Options
 ## Option 1: Custom Plugin Approach
 This approach gives you the most control and integration with WordPress.
