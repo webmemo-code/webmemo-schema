@@ -6,6 +6,7 @@ import json
 import pandas as pd
 import argparse
 import os
+import time
 from datetime import datetime
 from google.colab import auth, drive
 import gspread
@@ -15,22 +16,27 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Check if running in Google Colab
+IN_COLAB = 'google.colab' in str(get_ipython())
+
+# Conditional imports based on environment
+if IN_COLAB:
+    from google.colab import auth as colab_auth, drive
+    import gspread
+    from oauth2client.client import GoogleCredentials
+else:
+    # For non-Colab environments like GitHub Actions
+    import gspread
+    from google.oauth2.service_account import Credentials
+    from googleapiclient.discovery import build
+
 # Get credentials from environment variables
 WP_API_USER = os.getenv('WP_API_TESTER')
 WP_API_PASSWORD = os.getenv('WP_API_PW')
-# Google credentials are loaded automatically from GOOGLE_APPLICATION_CREDENTIALS env var, but, see below
-
-# Set credentials (in Colab, credentials are stored in dedicated environment variables)
-os.environ['WP_API_USER'] = os.getenv('WP_API_TESTER')
-os.environ['WP_API_PASSWORD'] = os.getenv('WP_API_PW')
-
-# For Google credentials, you would typically upload the JSON file to Colab
-# and then set the path
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.getenv('GOOGLE_APP_CREDS')
 
 # Configuration
-WP_API_BASE = 'https://api.webmemo.ch/wp-json/wp/v2'
-SCHEMA_API_BASE = 'https://api.webmemo.ch/wp-json/webmemo-schema/v1'
+WP_API_BASE = 'https://webmemo.ch/wp-json/wp/v2'
+SCHEMA_API_BASE = 'https://webmemo.ch/wp-json/webmemo-schema/v1'
 ENDPOINTS = {
     'posts': f'{WP_API_BASE}/posts',
     'pages': f'{WP_API_BASE}/pages',
@@ -42,11 +48,26 @@ ENDPOINTS = {
 }
 
 def authenticate():
-    """Authenticate with Google services"""
+    """Authenticate with Google services based on environment"""
     print("Authenticating with Google...")
-    auth.authenticate_user()
-    drive.mount('/content/drive/MyDrive/Tools AI/Schema to WP')
-    return gspread.authorize(GoogleCredentials.get_application_default())
+    
+    if IN_COLAB:
+        # Colab-specific authentication
+        colab_auth.authenticate_user()
+        drive.mount('/content/drive')
+        return gspread.authorize(GoogleCredentials.get_application_default())
+    else:
+        # Standard service account authentication
+        credentials_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+        if not credentials_path:
+            raise ValueError("GOOGLE_APPLICATION_CREDENTIALS environment variable not set")
+        
+        scopes = [
+            'https://www.googleapis.com/auth/spreadsheets',
+            'https://www.googleapis.com/auth/drive'
+        ]
+        credentials = Credentials.from_service_account_file(credentials_path, scopes=scopes)
+        return gspread.authorize(credentials)
 
 def fetch_all_pages(endpoint, params=None):
     """Fetch all pages from a paginated WordPress REST API endpoint"""
