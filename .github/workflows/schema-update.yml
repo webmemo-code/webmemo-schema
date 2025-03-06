@@ -1,0 +1,55 @@
+name: Schema.org Update
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Run every Sunday at midnight
+  workflow_dispatch:     # Allow manual triggers
+
+jobs:
+  update-schema:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r scripts/requirements.txt
+    
+    - name: Create Google credentials file
+      run: |
+        echo '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}' > google-credentials.json
+        echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/google-credentials.json" >> $GITHUB_ENV
+    
+    - name: Run schema collection and update
+      run: python scripts/webmemo-schema.py --all
+      env:
+        WP_API_USER: ${{ secrets.WP_API_TESTER }}
+        WP_API_PASSWORD: ${{ secrets.WP_API_PW }}
+    
+    - name: Store data as artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: schema-data
+        path: data/
+        retention-days: 7
+    
+    - name: Commit changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Check if there are changes to data files
+        if [[ -d "data" && -n "$(git status --porcelain data/)" ]]; then
+          git add data/
+          git commit -m "Update Schema.org data [skip ci]" 
+          git push
+        else
+          echo "No changes to commit"
+        fi
